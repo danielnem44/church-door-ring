@@ -38,7 +38,7 @@ export default {
 
   // Language the scan page starts in if we can't guess from the phone.
   // Available: nb (Norsk), en (English), fr (Français), sw (Kiswahili)
-  defaultLanguage: "nb",
+  defaultLanguage: "en",
 
   // How many seconds the visitor waits before we say "no answer yet"
   // and show the call button.

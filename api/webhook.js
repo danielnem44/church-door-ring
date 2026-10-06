@@ -46,7 +46,7 @@ export async function POST(request) {
     return new Response("Bad JSON", { status: 400 });
   }
 
-  const t = TEXT[process.env.TEAM_LANG] || TEXT.nb;
+  const t = TEXT[process.env.TEAM_LANG] || TEXT.en;
   const store = getStore();
 
   for (const tap of extractButtonTaps(body)) {

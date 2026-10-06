@@ -1,6 +1,6 @@
 # Church Door Ring (Jesus Moment)
 
-Scan a QR code at the church door → the **whole door team's phones ring at the same time** → the first person to press **1** goes down and opens. The visitor sees **"Anna kommer ned"** on their phone.
+Scan a QR code at the church door → the **whole door team's phones ring at the same time** → the first person to press **1** goes down and opens. The visitor sees **"Anna is coming down"** on their phone.
 
 The visitor only needs mobile data. No call credit, no app, no Facebook.
 
@@ -9,14 +9,14 @@ Visitor scans QR ──► scan page ──► "Ring kirken"
                                         │
               All door team phones ring at the same time
                                         │
-       First one picks up and presses 1 ──► visitor sees "Anna kommer ned"
+       First one picks up and presses 1 ──► visitor sees "Anna is coming down"
        The other phones stop ringing. Anyone who already picked up hears
-       "Anna går allerede ned. Takk likevel!"
+       "Anna is already going down. Thanks anyway!"
 ```
 
 **What's included**
 
-- **Scan page** in Norsk, English, Français and Kiswahili. The visitor picks the language.
+- **Scan page** in English and Norsk. The visitor can switch, and Norwegian phones get Norsk automatically.
 - **Closed screen** outside service times, showing the next service.
 - **"I have call credit, call instead"** button on every screen.
 - **Printable door sign** at `/sign`, with the QR code and the door phone number.
@@ -124,7 +124,7 @@ Without the database, ringing will not work reliably on Vercel.
 | `TWILIO_AUTH_TOKEN` | `...` | From step 3d |
 | `TWILIO_FROM` | `+15551234567` | The number from step 3c |
 | `SITE_URL` | `https://church-door-ring.vercel.app` | Your Vercel address |
-| `TEAM_LANG` | `nb` | Language the team hears: `nb` or `en` |
+| `TEAM_LANG` | `en` | Language the team hears on the phone: `en` (default) or `nb` |
 | `STATS_KEY` | `some-password` | For `/api/stats?key=...` |
 
 The Upstash keys are added by step 4.
@@ -136,10 +136,10 @@ The Upstash keys are added by step 4.
 ## 7. Test it for real
 
 1. Set `FORCE_OPEN=true` on Vercel, then redeploy.
-2. Open your site on your phone and tap **Ring kirken**.
+2. Open your site on your phone and tap **Ring the church**.
 3. Every phone in `DOOR_TEAM` should ring from your Twilio number.
-4. Pick up one phone. You hear: *"Hei! Noen venter ved inngangsdøren til Jesus Moment… Trykk 1 hvis du går ned og åpner."*
-5. Press **1**. The other phones stop ringing, and the visitor's screen changes to **"… kommer ned"** within a few seconds.
+4. Pick up one phone. You hear: *"Hello! Someone is waiting at the front door of Jesus Moment. Press 1 if you are going down to open."*
+5. Press **1**. The other phones stop ringing, and the visitor's screen changes to **"… is coming down"** within a few seconds.
 6. **Set `FORCE_OPEN` back to `false`**, then redeploy.
 7. Open `https://YOUR-SITE/sign` and click **Print**. Laminate it and put it on the door.
 
@@ -232,5 +232,3 @@ lib/                    ← schedule, Twilio, WhatsApp, database helpers
 scripts/dev-server.js   ← run locally with `npm run dev`
 scripts/test.js         ← `npm test`
 ```
-
-The Kiswahili text in `public/i18n.js` should be checked by a native speaker in the church.

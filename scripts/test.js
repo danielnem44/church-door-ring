@@ -137,14 +137,14 @@ test("phone calls: answer → press 1 claims → second person is told", async (
     const askXml = await ask.text();
     assert.match(askXml, /<Gather/);
     assert.match(askXml, /Ole/);
-    assert.match(askXml, /Trykk 1/);
+    assert.match(askXml, /Press 1/);
     assert.match(askXml, /method="POST"/);
 
     // Anna presses 1
     const gUrl = (m) => `http://localhost/api/voice-gather?id=${id}&m=${m}`;
     const annaForm = { CallSid: "CA1", Digits: "1" };
     const g1 = await post(gather, gUrl("Anna").replace("http://localhost", ""), gUrl("Anna"), annaForm, twSign(gUrl("Anna"), annaForm));
-    assert.match(await g1.text(), /Takk/);
+    assert.match(await g1.text(), /Thanks/);
     let s = await (await ringApi.GET(req("/api/ring?id=" + id))).json();
     assert.equal(s.status, "coming");
     assert.equal(s.by, "Anna");
@@ -154,14 +154,14 @@ test("phone calls: answer → press 1 claims → second person is told", async (
     const g2 = await post(gather, gUrl("Daniel").replace("http://localhost", ""), gUrl("Daniel"), dForm, twSign(gUrl("Daniel"), dForm));
     const g2xml = await g2.text();
     assert.match(g2xml, /Anna/);
-    assert.match(g2xml, /allerede/);
+    assert.match(g2xml, /already/);
     s = await (await ringApi.GET(req("/api/ring?id=" + id))).json();
     assert.equal(s.by, "Anna");
 
     // A third person who picks up after it's taken hears the same and no Gather
     const late = await post(voice, voiceUrl.replace("http://localhost", ""), voiceUrl, { CallSid: "CA3" }, twSign(voiceUrl, { CallSid: "CA3" }));
     const lateXml = await late.text();
-    assert.match(lateXml, /allerede/);
+    assert.match(lateXml, /already/);
     assert.doesNotMatch(lateXml, /<Gather/);
 
     // Wrong key → asked again
@@ -208,6 +208,18 @@ test("twilio: rings everyone, then cancels the other phones when one presses 1",
   } finally {
     globalThis.fetch = realFetch;
     for (const k of ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM", "SITE_URL"]) delete process.env[k];
+  }
+});
+
+test("team language: English by default, Norwegian with TEAM_LANG=nb", async () => {
+  const tw = await import("../lib/twiml.js");
+  delete process.env.TEAM_LANG;
+  assert.match(tw.t().ask("Jesus Moment", "Ole"), /Press 1/);
+  process.env.TEAM_LANG = "nb";
+  try {
+    assert.match(tw.t().ask("Jesus Moment", "Ole"), /Trykk 1/);
+  } finally {
+    delete process.env.TEAM_LANG;
   }
 });
 
