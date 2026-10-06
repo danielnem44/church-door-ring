@@ -10,7 +10,7 @@ export async function GET(request) {
     type: "svg",
     errorCorrectionLevel: "M",
     margin: 1,
-    color: { dark: "#1B2430", light: "#FFFFFF" },
+    color: { dark: "#213520", light: "#FFFFFF" },
   });
   return new Response(svg, {
     headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=300" },
