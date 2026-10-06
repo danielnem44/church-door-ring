@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#C8B99E">
+  <meta name="robots" content="noindex">
+  <title>Jesus Moment – Door</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="top"><img class="logo" src="/logo.png" alt="" width="48" height="48"><div class="church">Jesus Moment</div></header>
+    <section class="screen center" id="box">
+      <div class="intro"><h1 id="title">…</h1><p id="sub"></p></div>
+      <button type="button" class="btn primary full" id="go" hidden></button>
+    </section>
+  </main>
+  <script>
+    const q = new URLSearchParams(location.search);
+    const id = q.get("id"), m = q.get("m"), k = q.get("k");
+    const nb = /^nb|^no/i.test(navigator.language || "");
+    const T = nb
+      ? { ask: "Noen står ved døren", name: (n) => `Navn: ${n}`, go: "Jeg går ned", done: "Takk! Den som venter ser at du kommer.", taken: (w) => `${w} går allerede ned. Takk likevel!`, gone: "Denne ringingen er utløpt.", bad: "Ugyldig lenke.", err: "Noe gikk galt. Prøv igjen." }
+      : { ask: "Someone is at the door", name: (n) => `Name: ${n}`, go: "I'm going down", done: "Thank you! The visitor can see you're coming.", taken: (w) => `${w} is already going down. Thanks anyway!`, gone: "This ring has expired.", bad: "This link isn't valid.", err: "Something went wrong. Try again." };
+    const $ = (i) => document.getElementById(i);
+    const show = (t, s, btn) => { $("title").textContent = t; $("sub").textContent = s || ""; $("go").hidden = !btn; };
+    const url = "/api/claim?" + new URLSearchParams({ id, m, k });
+    const finish = (st, by) => st === "expired" ? show(T.gone) : by === m ? show(T.done) : show(T.taken(by));
+    fetch(url).then((r) => r.json()).then((d) => {
+      if (d.error) return show(T.bad);
+      if (d.status === "ringing") { show(T.ask, d.visitor ? T.name(d.visitor) : "", true); $("go").textContent = T.go; }
+      else finish(d.status, d.by);
+    }).catch(() => show(T.err));
+    $("go").onclick = async () => {
+      $("go").disabled = true;
+      try {
+        const r = await fetch("/api/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, m, k }) });
+        const d = await r.json();
+        if (d.error) return show(T.bad);
+        finish(d.status, d.by);
+      } catch { show(T.err); $("go").disabled = false; }
+    };
+  </script>
+</body>
+</html>

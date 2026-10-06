@@ -137,7 +137,7 @@ test("phone calls: answer → press 1 claims → second person is told", async (
     const askXml = await ask.text();
     assert.match(askXml, /<Gather/);
     assert.match(askXml, /Ole/);
-    assert.match(askXml, /press 1/);
+    assert.match(askXml, /Press 1/);
     assert.match(askXml, /method="POST"/);
 
     // Anna presses 1
@@ -214,10 +214,10 @@ test("twilio: rings everyone, then cancels the other phones when one presses 1",
 test("team language: English by default, Norwegian with TEAM_LANG=nb", async () => {
   const tw = await import("../lib/twiml.js");
   delete process.env.TEAM_LANG;
-  assert.match(tw.t().ask("Jesus Moment", "Ole"), /press 1/);
+  assert.match(tw.t().ask("Jesus Moment", "Ole"), /Press 1/);
   process.env.TEAM_LANG = "nb";
   try {
-    assert.match(tw.t().ask("Jesus Moment", "Ole"), /trykk 1/);
+    assert.match(tw.t().ask("Jesus Moment", "Ole"), /Trykk 1/);
   } finally {
     delete process.env.TEAM_LANG;
   }
@@ -247,4 +247,33 @@ test("bad ring id is rejected", async () => {
 test("qr is an svg pointing at the site", async () => {
   const svg = await (await qr.GET(req("/api/qr"))).text();
   assert.match(svg, /^<svg/);
+});
+
+test("text link: needs the right code, first tap wins", async () => {
+  process.env.FORCE_OPEN = "true";
+  const claim = await import("../api/claim.js");
+  const { claimToken } = await import("../lib/twilio.js");
+  const r = await ringApi.POST(req("/api/ring", { method: "POST", body: "{}", headers: { "x-forwarded-for": "7.7.7.7" } }));
+  const { id } = await r.json();
+  const post = (m, k) => claim.POST(req("/api/claim", { method: "POST", body: JSON.stringify({ id, m, k }) }));
+
+  // wrong code → refused, nothing changes
+  assert.equal((await post("Anna", "wrong")).status, 403);
+  // opening the link (GET) never claims
+  const view = await (await claim.GET(req(`/api/claim?id=${id}&m=Anna&k=${claimToken(id, "Anna")}`))).json();
+  assert.equal(view.status, "ringing");
+
+  const a = await (await post("Anna", claimToken(id, "Anna"))).json();
+  assert.equal(a.result, "won");
+  const d = await (await post("Daniel", claimToken(id, "Daniel"))).json();
+  assert.equal(d.result, "taken");
+  assert.equal(d.by, "Anna");
+  assert.equal((await (await ringApi.GET(req(`/api/ring?id=${id}`))).json()).by, "Anna");
+});
+
+test("short call prompt", async () => {
+  const tw = await import("../lib/twiml.js");
+  const txt = tw.t().ask("Jesus Moment", "Ole", "Daniel");
+  assert.match(txt, /Daniel/);
+  assert.ok(txt.length < 140, `too long: ${txt.length}`);
 });

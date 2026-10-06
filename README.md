@@ -124,6 +124,7 @@ Without the database, ringing will not work reliably on Vercel.
 | `TWILIO_AUTH_TOKEN` | `...` | From step 3d |
 | `TWILIO_FROM` | `+15551234567` | The number from step 3c |
 | `SITE_URL` | `https://church-door-ring.vercel.app` | Your Vercel address |
+| `NOTIFY_SMS` | `true` | Also text each person a tap link ("I'm going down"). Needs Twilio to allow SMS to Norway (Messaging → Geo permissions). |
 | `TEAM_LANG` | `en` | Language the team hears on the phone: `en` (default) or `nb` |
 | `STATS_KEY` | `some-password` | For `/api/stats?key=...` |
 
@@ -223,6 +224,7 @@ public/sign.html        ← printable door sign
 api/ring.js             ← start a ring / check status
 api/voice.js            ← what the team hears when they pick up
 api/voice-gather.js     ← what happens when someone presses 1
+api/claim.js            ← the tap link in the text message (page: public/claim.html)
 api/webhook.js          ← WhatsApp button taps (only if WhatsApp is on)
 api/status.js           ← open or closed right now
 api/qr.js               ← the QR code image
