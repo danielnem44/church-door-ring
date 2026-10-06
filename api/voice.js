@@ -25,7 +25,7 @@ async function handle(request) {
   const action = `${base}/api/voice-gather?id=${encodeURIComponent(id)}&m=${encodeURIComponent(member)}`;
   const gather =
     `<Gather input="dtmf" numDigits="1" finishOnKey="" timeout="8" action="${esc(action)}" method="POST">` +
-    say(t().ask(church(), ring.name)) +
+    say(t().ask(church(), ring.name, member)) +
     `</Gather>`;
   // Two chances to press 1, then goodbye
   return twiml(gather + gather + say(t().noInput) + "<Hangup/>");

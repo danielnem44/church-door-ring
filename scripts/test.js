@@ -137,7 +137,7 @@ test("phone calls: answer → press 1 claims → second person is told", async (
     const askXml = await ask.text();
     assert.match(askXml, /<Gather/);
     assert.match(askXml, /Ole/);
-    assert.match(askXml, /Press 1/);
+    assert.match(askXml, /press 1/);
     assert.match(askXml, /method="POST"/);
 
     // Anna presses 1
@@ -214,10 +214,10 @@ test("twilio: rings everyone, then cancels the other phones when one presses 1",
 test("team language: English by default, Norwegian with TEAM_LANG=nb", async () => {
   const tw = await import("../lib/twiml.js");
   delete process.env.TEAM_LANG;
-  assert.match(tw.t().ask("Jesus Moment", "Ole"), /Press 1/);
+  assert.match(tw.t().ask("Jesus Moment", "Ole"), /press 1/);
   process.env.TEAM_LANG = "nb";
   try {
-    assert.match(tw.t().ask("Jesus Moment", "Ole"), /Trykk 1/);
+    assert.match(tw.t().ask("Jesus Moment", "Ole"), /trykk 1/);
   } finally {
     delete process.env.TEAM_LANG;
   }
