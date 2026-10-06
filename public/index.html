@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="robots" content="noindex">
+  <title>Church door</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F6B4F' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/%3E%3Cpath d='M13.7 21a2 2 0 0 1-3.4 0'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div class="church" id="churchName"></div>
+      <div class="pill" id="statusPill"><span class="dot"></span><span id="statusText"></span></div>
+    </header>
+
+    <nav class="langs" id="langs" aria-label="Language"></nav>
+
+    <!-- Loading -->
+    <section class="screen center" id="s-loading" aria-busy="true">
+      <div class="spinner" aria-hidden="true"></div>
+    </section>
+
+    <!-- Form -->
+    <section class="screen" id="s-form" hidden>
+      <div class="intro">
+        <h1 data-t="formTitle"></h1>
+        <p data-t="formSub"></p>
+      </div>
+      <form id="ringForm" class="stack" novalidate>
+        <div class="field">
+          <label for="visitorName"><span data-t="nameLabel"></span> <span class="muted" data-t="optional"></span></label>
+          <input id="visitorName" name="name" type="text" maxlength="40" autocomplete="given-name" enterkeyhint="send">
+        </div>
+        <p class="error" id="formError" role="alert" hidden></p>
+        <div class="grow"></div>
+        <button type="submit" class="btn primary" id="ringBtn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span data-t="ringBtn"></span>
+        </button>
+        <a class="btn ghost callLink" href="#">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+          <span data-t="callBtn"></span>
+        </a>
+      </form>
+    </section>
+
+    <!-- Ringing -->
+    <section class="screen center" id="s-ringing" hidden>
+      <div class="bell" aria-hidden="true">
+        <div class="pulse"></div>
+        <div class="bell-core">
+          <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </div>
+      </div>
+      <div class="intro">
+        <h1 data-t="ringingTitle" aria-live="polite"></h1>
+        <p data-t="ringingSub"></p>
+      </div>
+      <div class="demo" hidden>
+        <p class="muted small" data-t="demoNote"></p>
+        <button type="button" class="btn ghost small-btn" id="demoClaim" data-t="demoClaim"></button>
+      </div>
+    </section>
+
+    <!-- Coming -->
+    <section class="screen center" id="s-coming" hidden>
+      <div class="badge ok" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div class="intro">
+        <h1 id="comingTitle" aria-live="assertive"></h1>
+        <p data-t="comingSub"></p>
+      </div>
+      <button type="button" class="btn link" id="startOver" data-t="startOver"></button>
+    </section>
+
+    <!-- No answer yet -->
+    <section class="screen center" id="s-noanswer" hidden>
+      <div class="badge wait" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      </div>
+      <div class="intro">
+        <h1 data-t="noAnswerTitle"></h1>
+        <p data-t="noAnswerSub"></p>
+        <p class="note" id="backupNote" data-t="backupCalled" hidden></p>
+      </div>
+      <p class="error" id="againError" role="alert" hidden></p>
+      <div class="stack full">
+        <button type="button" class="btn primary" id="ringAgain">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span data-t="ringAgain"></span>
+        </button>
+        <a class="btn ghost callLink" href="#">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+          <span class="phoneText"></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Closed -->
+    <section class="screen center" id="s-closed" hidden>
+      <div class="badge grey" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      </div>
+      <div class="intro">
+        <h1 data-t="closedTitle"></h1>
+        <p data-t="closedSub"></p>
+      </div>
+      <div class="card" id="nextCard" hidden>
+        <div class="muted small" data-t="nextService"></div>
+        <div class="big" id="nextText"></div>
+      </div>
+      <div class="grow"></div>
+      <a class="btn ghost callLink full" href="#">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+        <span data-t="urgentCall"></span>
+      </a>
+    </section>
+
+    <!-- Offline / error -->
+    <section class="screen center" id="s-offline" hidden>
+      <div class="intro">
+        <h1 data-t="errOffline"></h1>
+      </div>
+      <a class="btn ghost callLink full" href="#"><span class="phoneText"></span></a>
+    </section>
+  </main>
+
+  <script src="/i18n.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

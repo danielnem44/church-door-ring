@@ -1,0 +1,18 @@
+{
+  "name": "church-door-ring",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Scan a QR code at the church door and the door team gets a WhatsApp message to come and open.",
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env.local scripts/dev-server.js",
+    "test": "node --test scripts/test.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.39.0",
+    "qrcode": "^1.5.4"
+  }
+}
