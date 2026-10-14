@@ -274,6 +274,6 @@ test("text link: needs the right code, first tap wins", async () => {
 test("short call prompt", async () => {
   const tw = await import("../lib/twiml.js");
   const txt = tw.t().ask("Jesus Moment", "Ole", "Daniel");
-  assert.match(txt, /Daniel/);
-  assert.ok(txt.length < 140, `too long: ${txt.length}`);
+  assert.match(txt, /Ole/);
+  assert.ok(txt.length < 50, `too long: ${txt.length}`);
 });
