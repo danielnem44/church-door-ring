@@ -277,3 +277,28 @@ test("short call prompt", async () => {
   assert.match(txt, /Ole/);
   assert.ok(txt.length < 50, `too long: ${txt.length}`);
 });
+
+test("whatsapp via twilio: template + link code per person", async () => {
+  process.env.NOTIFY_WHATSAPP = "true";
+  process.env.TWILIO_WHATSAPP_TEMPLATE_SID = "HXtest";
+  process.env.TWILIO_ACCOUNT_SID = "ACx";
+  process.env.TWILIO_AUTH_TOKEN = "tok";
+  process.env.TWILIO_FROM = "+14436250830";
+  process.env.TWILIO_WHATSAPP_FROM = "whatsapp:+14436250830";
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, i) => { calls.push([String(u), String(i.body)]); return new Response(JSON.stringify({ sid: "SM1" }), { status: 201 }); };
+  try {
+    const { alertTeam } = await import("../lib/notify.js");
+    const r = await alertTeam({ team: [{ name: "Anna Berg", number: "4790000001" }], ringId: "abcDEF123", visitorName: "", baseUrl: "https://x.test" });
+    const wa = calls.find(([, b]) => b.includes("ContentSid=HXtest"));
+    assert.ok(wa, "no whatsapp request sent");
+    assert.match(decodeURIComponent(wa[1]), /To=whatsapp:\+4790000001/);
+    assert.match(decodeURIComponent(wa[1]), /id=abcDEF123&m=Anna&k=[0-9a-f]{16}/);
+    assert.ok(r.delivered >= 1);
+  } finally {
+    globalThis.fetch = realFetch;
+    delete process.env.NOTIFY_WHATSAPP; delete process.env.TWILIO_WHATSAPP_TEMPLATE_SID;
+    delete process.env.TWILIO_ACCOUNT_SID; delete process.env.TWILIO_AUTH_TOKEN; delete process.env.TWILIO_FROM; delete process.env.TWILIO_WHATSAPP_FROM;
+  }
+});

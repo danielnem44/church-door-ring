@@ -125,6 +125,9 @@ Without the database, ringing will not work reliably on Vercel.
 | `TWILIO_FROM` | `+15551234567` | The number from step 3c |
 | `SITE_URL` | `https://church-door-ring.vercel.app` | Your Vercel address |
 | `NOTIFY_SMS` | `true` | Also text each person a tap link ("I'm going down"). Needs Twilio to allow SMS to Norway (Messaging → Geo permissions). |
+| `NOTIFY_WHATSAPP` | `true` | Also send each person a WhatsApp message with an "I'm going down" button. Needs the next two settings. |
+| `TWILIO_WHATSAPP_FROM` | `whatsapp:+14436250830` | Your Twilio WhatsApp sender |
+| `TWILIO_WHATSAPP_TEMPLATE_SID` | `HX...` | The approved template `door_ring` (button URL: `https://YOUR-SITE/claim?{{1}}`) |
 | `TEAM_LANG` | `en` | Language the team hears on the phone: `en` (default) or `nb` |
 | `STATS_KEY` | `some-password` | For `/api/stats?key=...` |
 
