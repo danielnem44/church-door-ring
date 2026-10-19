@@ -110,7 +110,10 @@
   function setupCallLinks() {
     const phone = (state.cfg && state.cfg.doorPhone) || "";
     const tel = "tel:" + phone.replace(/[^\d+]/g, "");
-    document.querySelectorAll(".callLink").forEach((a) => (a.href = tel));
+    document.querySelectorAll(".callLink").forEach((a) => {
+      a.href = tel;
+      a.onclick = () => { try { navigator.sendBeacon("/api/trial"); } catch {} }; // TEMP door-ring trial: count "call instead" taps
+    });
     document.querySelectorAll(".phoneText").forEach((s) => (s.textContent = phone));
   }
 

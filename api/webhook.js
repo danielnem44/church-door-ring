@@ -5,6 +5,7 @@ import { getStore } from "../lib/store.js";
 import { findMember } from "../lib/team.js";
 import { verifySignature, extractButtonTaps, sendText } from "../lib/whatsapp.js";
 import { json, monthKey } from "../lib/http.js";
+import { trialAnswered } from "../lib/trial.js"; // TEMP door-ring trial
 
 const RING_TTL = 30 * 60;
 
@@ -69,6 +70,7 @@ export async function POST(request) {
       ring.claimedAt = Date.now();
       await store.set(`ring:${id}`, ring, { ex: RING_TTL });
       await store.incr(`stats:${monthKey()}:claims`).catch(() => {});
+      await trialAnswered(ring); // TEMP door-ring trial
       await sendText({ to: tap.from, text: t.thanks });
     } else {
       const winner = (await store.get(`claim:${id}`)) || ring.by || "Someone";

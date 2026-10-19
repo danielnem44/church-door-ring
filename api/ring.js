@@ -6,6 +6,7 @@ import { getStore } from "../lib/store.js";
 import { getTeam } from "../lib/team.js";
 import { alertTeam, isMock } from "../lib/notify.js";
 import { json, clientIp, monthKey, baseUrl } from "../lib/http.js";
+import { trialCount } from "../lib/trial.js"; // TEMP door-ring trial
 
 const RING_TTL = 30 * 60; // keep a ring for 30 minutes
 const PER_PHONE_COOLDOWN = Number(process.env.RING_COOLDOWN_SECONDS || 45);
@@ -61,6 +62,7 @@ export async function POST(request) {
   // Remember the call ids (separate key, so we never overwrite a claim) to stop the other phones later
   if (sids.length) await store.set(`sids:${id}`, sids, { ex: RING_TTL });
   await store.incr(`stats:${monthKey()}:rings`).catch(() => {});
+  await trialCount("rings"); // TEMP door-ring trial
 
   if (delivered === 0) return json({ error: "send_failed", id }, 502);
   return json({ id, notified: delivered, mock: isMock() });

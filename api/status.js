@@ -3,6 +3,7 @@ import config from "../church.config.js";
 import { isOpen, nextOpening } from "../lib/schedule.js";
 import { getStore } from "../lib/store.js";
 import { json, monthKey } from "../lib/http.js";
+import { trialCount } from "../lib/trial.js"; // TEMP door-ring trial
 
 export async function GET(request) {
   const url = new URL(request.url);
@@ -10,6 +11,7 @@ export async function GET(request) {
   if (url.searchParams.get("src") === "door") {
     try {
       await getStore().incr(`stats:${monthKey()}:scans`);
+      await trialCount("scans"); // TEMP door-ring trial
     } catch (e) {
       console.error("[status] stats failed", e);
     }

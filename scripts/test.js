@@ -302,3 +302,29 @@ test("whatsapp via twilio: template + link code per person", async () => {
     delete process.env.TWILIO_ACCOUNT_SID; delete process.env.TWILIO_AUTH_TOKEN; delete process.env.TWILIO_FROM; delete process.env.TWILIO_WHATSAPP_FROM;
   }
 });
+
+// TEMP door-ring trial: per-day numbers for the Pulse panel
+test("trial: scans, rings, answers and call taps by day, key in a header", async () => {
+  process.env.FORCE_OPEN = "true";
+  process.env.STATS_KEY = "stats-test";
+  const stats = await import("../api/stats.js");
+  const trial = await import("../api/trial.js");
+  const { claimRing } = await import("../lib/claim.js");
+  (await import("../lib/store.js"))._resetStore(); // earlier tests used up the 8-rings-per-10-min limit
+  const today = async () => (await (await stats.GET(req("/api/stats", { headers: { "x-stats-key": "stats-test" } }))).json()).trial.at(-1);
+
+  const before = await today();
+  await status.GET(req("/api/status?src=door"));
+  const { id } = await (await ringApi.POST(req("/api/ring", { method: "POST", body: "{}", headers: { "x-forwarded-for": "7.7.7.7" } }))).json();
+  await claimRing(id, "Anna");
+  await trial.POST(req("/api/trial", { method: "POST", headers: { "x-forwarded-for": "7.7.7.7" } }));
+  await trial.POST(req("/api/trial", { method: "POST", headers: { "x-forwarded-for": "7.7.7.7" } })); // double tap
+  const after = await today();
+
+  assert.equal(after.scans - before.scans, 1);
+  assert.equal(after.rings - before.rings, 1);
+  assert.equal(after.answered - before.answered, 1);
+  assert.equal(after.calls - before.calls, 1);
+  assert.equal(after.by.Anna - (before.by.Anna || 0), 1);
+  assert.equal((await stats.GET(req("/api/stats", { headers: { "x-stats-key": "wrong" } }))).status, 404);
+});
