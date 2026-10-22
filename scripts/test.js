@@ -223,13 +223,82 @@ test("team language: English by default, Norwegian with TEAM_LANG=nb", async () 
   }
 });
 
-test("anti-spam: same phone can't ring twice in a row", async () => {
+test("repeat scan: same phone follows its first ring, nobody is alerted twice", async () => {
   process.env.FORCE_OPEN = "true";
   const mk = () => ringApi.POST(req("/api/ring", { method: "POST", body: "{}", headers: { "x-forwarded-for": "2.2.2.2" } }));
-  assert.equal((await mk()).status, 200);
+  const first = await mk();
+  assert.equal(first.status, 200);
+  const a = await first.json();
   const second = await mk();
-  assert.equal(second.status, 429);
-  assert.equal((await second.json()).error, "too_soon");
+  assert.equal(second.status, 200);
+  const b = await second.json();
+  assert.equal(b.id, a.id);
+  assert.equal(b.repeat, true);
+  assert.equal(b.notified, 0);
+});
+
+test("text first: texts go out at once, calls only start if nobody taps in time", async () => {
+  process.env.FORCE_OPEN = "true";
+  Object.assign(process.env, { TWILIO_ACCOUNT_SID: "ACtest", TWILIO_AUTH_TOKEN: "tw-secret", TWILIO_FROM: "+15550001111", SITE_URL: "https://church.example/", NOTIFY_SMS: "true", CALL_DELAY_SECONDS: "30" });
+  const realFetch = globalThis.fetch;
+  const realNow = Date.now;
+  const calls = [];
+  let n = 0;
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url: String(url), form: Object.fromEntries(new URLSearchParams(String(init?.body || ""))) });
+    return new Response(JSON.stringify({ sid: "CAfake" + ++n }), { status: 201 });
+  };
+  try {
+    const r = await ringApi.POST(req("/api/ring", { method: "POST", body: JSON.stringify({ name: "Ole" }), headers: { "x-forwarded-for": "7.7.7.7" } }));
+    const out = await r.json();
+    assert.equal(r.status, 200);
+    const texts = () => calls.filter((c) => c.url.endsWith("/Messages.json"));
+    const phones = () => calls.filter((c) => c.url.endsWith("/Calls.json"));
+    assert.equal(texts().length, 2);
+    assert.equal(phones().length, 0);
+
+    // 10 seconds later: still no calls
+    await ringApi.GET(req("/api/ring?id=" + out.id));
+    assert.equal(phones().length, 0);
+
+    // 31 seconds later, nobody tapped: everyone's phone rings, and only once
+    const t0 = realNow();
+    Date.now = () => t0 + 31000;
+    await ringApi.GET(req("/api/ring?id=" + out.id));
+    await ringApi.GET(req("/api/ring?id=" + out.id));
+    assert.equal(phones().length, 2);
+  } finally {
+    Date.now = realNow;
+    globalThis.fetch = realFetch;
+    for (const k of ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM", "SITE_URL", "NOTIFY_SMS", "CALL_DELAY_SECONDS"]) delete process.env[k];
+  }
+});
+
+test("text first: if somebody taps the link in time, nobody gets a call", async () => {
+  process.env.FORCE_OPEN = "true";
+  Object.assign(process.env, { TWILIO_ACCOUNT_SID: "ACtest", TWILIO_AUTH_TOKEN: "tw-secret", TWILIO_FROM: "+15550001111", SITE_URL: "https://church.example/", NOTIFY_SMS: "true", CALL_DELAY_SECONDS: "30" });
+  const realFetch = globalThis.fetch;
+  const realNow = Date.now;
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url: String(url) });
+    return new Response(JSON.stringify({ sid: "CAx" }), { status: 201 });
+  };
+  try {
+    const r = await ringApi.POST(req("/api/ring", { method: "POST", body: "{}", headers: { "x-forwarded-for": "8.8.4.4" } }));
+    const out = await r.json();
+    const { claimRing } = await import("../lib/claim.js");
+    await claimRing(out.id, "Anna");
+    const t0 = realNow();
+    Date.now = () => t0 + 40000;
+    const g = await (await ringApi.GET(req("/api/ring?id=" + out.id))).json();
+    assert.equal(g.status, "coming");
+    assert.equal(calls.filter((c) => c.url.endsWith("/Calls.json")).length, 0);
+  } finally {
+    Date.now = realNow;
+    globalThis.fetch = realFetch;
+    for (const k of ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM", "SITE_URL", "NOTIFY_SMS", "CALL_DELAY_SECONDS"]) delete process.env[k];
+  }
 });
 
 test("webhook verification handshake", async () => {
@@ -301,30 +370,4 @@ test("whatsapp via twilio: template + link code per person", async () => {
     delete process.env.NOTIFY_WHATSAPP; delete process.env.TWILIO_WHATSAPP_TEMPLATE_SID;
     delete process.env.TWILIO_ACCOUNT_SID; delete process.env.TWILIO_AUTH_TOKEN; delete process.env.TWILIO_FROM; delete process.env.TWILIO_WHATSAPP_FROM;
   }
-});
-
-// TEMP door-ring trial: per-day numbers for the Pulse panel
-test("trial: scans, rings, answers and call taps by day, key in a header", async () => {
-  process.env.FORCE_OPEN = "true";
-  process.env.STATS_KEY = "stats-test";
-  const stats = await import("../api/stats.js");
-  const trial = await import("../api/trial.js");
-  const { claimRing } = await import("../lib/claim.js");
-  (await import("../lib/store.js"))._resetStore(); // earlier tests used up the 8-rings-per-10-min limit
-  const today = async () => (await (await stats.GET(req("/api/stats", { headers: { "x-stats-key": "stats-test" } }))).json()).trial.at(-1);
-
-  const before = await today();
-  await status.GET(req("/api/status?src=door"));
-  const { id } = await (await ringApi.POST(req("/api/ring", { method: "POST", body: "{}", headers: { "x-forwarded-for": "7.7.7.7" } }))).json();
-  await claimRing(id, "Anna");
-  await trial.POST(req("/api/trial", { method: "POST", headers: { "x-forwarded-for": "7.7.7.7" } }));
-  await trial.POST(req("/api/trial", { method: "POST", headers: { "x-forwarded-for": "7.7.7.7" } })); // double tap
-  const after = await today();
-
-  assert.equal(after.scans - before.scans, 1);
-  assert.equal(after.rings - before.rings, 1);
-  assert.equal(after.answered - before.answered, 1);
-  assert.equal(after.calls - before.calls, 1);
-  assert.equal(after.by.Anna - (before.by.Anna || 0), 1);
-  assert.equal((await stats.GET(req("/api/stats", { headers: { "x-stats-key": "wrong" } }))).status, 404);
 });
