@@ -21,10 +21,16 @@ export default {
   // If end is earlier than start (e.g. 21:00 → 03:00) it runs past midnight.
   // day: monday | tuesday | wednesday | thursday | friday | saturday | sunday
   services: [
-    { name: "Bible Study",        day: "tuesday",   serviceStart: "18:00", start: "17:45", end: "20:30" },
-    { name: "Midweek Service",    day: "wednesday", serviceStart: "18:00", start: "17:45", end: "20:30" },
-    { name: "Night shift Prayer", day: "friday",    serviceStart: "18:00", start: "17:45", end: "21:00" },
-    { name: "Sunday Service",     day: "sunday",    serviceStart: "15:00", start: "14:45", end: "18:00" },
+    { name: "Bible Study",        day: "tuesday",   serviceStart: "18:00", start: "17:00", end: "20:30" },
+    { name: "Midweek Service",    day: "wednesday", serviceStart: "18:00", start: "17:00", end: "20:30" },
+    { name: "Night shift Prayer", day: "friday",    serviceStart: "18:00", start: "17:00", end: "20:30" },
+    { name: "Sunday Service",     day: "sunday",    serviceStart: "15:00", start: "14:00", end: "17:00" },
+  ],
+
+  // Every month on the same weekday. nth: "last" = the last one of the month,
+  // or 1, 2, 3, 4 for the first, second ... one. These run on top of the weekly services.
+  monthly: [
+    { name: "Last Friday Prayer", day: "friday", nth: "last", serviceStart: "20:30", start: "20:30", end: "23:00" },
   ],
 
   // One-off events. Date is YYYY-MM-DD.
